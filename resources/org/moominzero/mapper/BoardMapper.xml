@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.moominzero.mapper.BoardMapper">
+	<select id="getList" resultType="org.moominzero.domain.BoardVO">
+		<![CDATA[select * from tbl_board where bno>0 order by bno desc]]>
+	</select>
+<!-- id는 메서드이름 -->
+<!-- 인터페이스에 선언된 SQL문이 없으면  -> XML문서를 찾아서 실행한다.-->
+
+	<!-- sql조각선언 -->
+	<sql id="criteria">
+			<trim prefix="where (" suffix=")">
+				<foreach collection="typeArr" item="type" separator="OR">
+					<if test="type=='T'.toString()">
+					title like concat('%',#{keyword},'%')
+					</if>		
+					<if test="type=='C'.toString()">
+					content like concat('%',#{keyword},'%')
+					</if>	
+					<if test="type=='W'.toString()">
+					writer like concat('%',#{keyword},'%')
+					</if>			
+				</foreach>
+				</trim>
+	</sql>
+
+	<select id="getListWithPaging" resultType="org.moominzero.domain.BoardVO">
+		<![CDATA[select R1.* FROM(
+			SELECT * FROM tbl_board 
+     		   order by bno desc     	
+				) R1  ]]>
+			<!-- 	<trim prefix="where (" suffix=")">
+				<foreach collection="typeArr" item="type" separator="OR">
+					<if test="type=='T'.toString()">
+					title like concat('%',#{keyword},'%')
+					</if>		
+					<if test="type=='C'.toString()">
+					content like concat('%',#{keyword},'%')
+					</if>	
+					<if test="type=='W'.toString()">
+					writer like concat('%',#{keyword},'%')
+					</if>			
+				</foreach>
+				</trim> -->
+				<include refid="criteria"></include>
+				<![CDATA[
+				
+			LIMIT #{amount} OFFSET #{skipCount}]]>
+	
+	</select>
+
+
+	<insert id="insert">
+		insert into tbl_board(title,content,writer) values ( #{title}, #{content}, #{writer})
+	</insert>
+	
+	<insert id="insertSelectKey">
+	
+		insert into tbl_board(title,content,writer) values ( #{title}, #{content}, #{writer})
+		<selectKey order="AFTER" resultType="long" keyProperty="bno">
+select last_insert_id()
+</selectKey>
+	</insert>
+	
+	<select id="read" resultType="org.moominzero.domain.BoardVO">
+		select * from tbl_board where bno= #{bno}
+	</select>
+	
+	
+	<delete id="delete">
+		delete from tbl_board where bno=#{bno}
+	</delete>
+	
+	<update id="update">
+		update tbl_board set title=#{title}, content=#{content}, writer =#{writer}, updateDate=now() where bno=#{bno}
+	</update>
+	
+	<select id="getTotalCount" resultType ="int">
+		select count(*) from tbl_board where
+		<trim prefixOverrides="where" suffix="and"><include refid="criteria"></include></trim> bno >0
+	</select>
+	
+	<select id="searchTest" resultType="org.moominzero.domain.BoardVO">
+	<![CDATA[
+		select * from tbl_board where
+	]]>
+	<trim suffix="and">
+	 <foreach collection="map" index="key" item="val" separator="OR" open="(" close=")">
+	 	<if test="key == 'T'.toString()">
+	 	 title like #{val}
+	 	</if>
+	 	<if test="key == 'C'.toString()">
+	 	 content like #{val}
+	 	</if>
+	 	<if test="key == 'W'.toString()">
+	 	 writer like #{val}
+	 	</if>
+	 </foreach>
+	 </trim>
+	 
+	 <![CDATA[
+	 bno <10
+	 ]]>
+	</select>
+
+</mapper>
